@@ -217,7 +217,7 @@ def main():
                             ]
 
          social_media_icons = SocialMediaIcons(social_media_links)  # Create an instance
-         st.markdown("<br><br>", unsafe_allow_html=True) # two blank lines
+         st.markdown("<br>", unsafe_allow_html=True) # two blank lines
          social_media_icons.render(sidebar=True, justify_content="start")  # Call the method on the instance
          
          #st.write("Built by [Anil](https://www.linkedin.com/in/aniltiwari/)", unsafe_allow_html=True)
