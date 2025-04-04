@@ -1,5 +1,6 @@
 altair==5.5.0
 attrs==25.3.0
+beautifulsoup4==4.13.3
 blinker==1.9.0
 cachetools==5.5.2
 certifi==2025.1.31
@@ -40,6 +41,8 @@ scikit-learn==1.6.1
 scipy==1.15.2
 six==1.17.0
 smmap==5.0.2
+soupsieve==2.6
+st-social-media-links==0.1.4
 statsmodels==0.14.4
 streamlit==1.44.1
 tenacity==9.1.2
