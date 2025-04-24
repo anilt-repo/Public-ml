@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.dates as mdates
 from st_social_media_links import SocialMediaIcons
+import io
 
 # Function to preprocess the data
 def preprocess_data(df, date_column='Date'):
@@ -195,79 +196,115 @@ def plot_forecast(history_df, forecast_df, chart_type='bar'):
 # Streamlit app
 def main():
     st.title('Forecasting App')
-    #st.sidebar.markdown("[![Title](https://content.linkedin.com/content/dam/me/business/en-us/amp/xbu/linkedin-revised-brand-guidelines/in-logo/fg/brand-inlogo-acceptable-follow-dsk-v01-1x.png/jcr:content/renditions/brand-inlogo-acceptable-follow-dsk-v01-2x.png)](https://www.linkedin.com/in/aniltiwari/)")
+
     with st.sidebar:
-                  
-        
-         st.markdown("""
+        st.markdown("""
+        **Key Features:**
 
-    **Key Features:**
+        *   **Easy Data Upload:** Simply upload an Excel file or paste data. The first column should contain dates and subsequent columns should contain numerical data.
+        *   **Date Frequency Handling:** The app automatically detects the frequency of your date data (e.g., daily, weekly, monthly).
+        *   **Multiple Column Forecasting:**  Forecasts are generated considering all numerical columns in your data.
+        *   **Interactive Charting:** Visualize your historical data and forecasts with interactive stacked bar or line charts.
+        *   **Customizable Forecast Length:** Specify the number of future periods you want to forecast.
+        *   **Clear Data Presentation:** Forecasted data is presented in a table with a 'Total' column for easy analysis.
+        """)
 
-    *   **Easy Data Upload:** Simply upload an Excel file with the first column containing dates and subsequent columns containing numerical data.
-    *   **Date Frequency Handling:** The app automatically detects the frequency of your date data (e.g., daily, weekly, monthly).
-    *   **Multiple Column Forecasting:**  Forecasts are generated considering all numerical columns in your data.
-    *   **Interactive Charting:** Visualize your historical data and forecasts with interactive stacked bar or line charts.
-    *   **Customizable Forecast Length:** Specify the number of future periods you want to forecast.
-    *   **Clear Data Presentation:** Forecasted data is presented in a table with a 'Total' column for easy analysis.
-    """)
-         
-         social_media_links = [
+        social_media_links = [
                                 "https://medium.com/@tiw-anilk",
-                                "https://www.linkedin.com/in/aniltiwari/"                                
+                                "https://www.linkedin.com/in/aniltiwari/"
                             ]
 
-         social_media_icons = SocialMediaIcons(social_media_links)  # Create an instance
-         st.markdown("<br>", unsafe_allow_html=True) # two blank lines
-         social_media_icons.render(sidebar=True, justify_content="start")  # Call the method on the instance
-         
-         #st.write("Built by [Anil](https://www.linkedin.com/in/aniltiwari/)", unsafe_allow_html=True)
-         st.write("Visit my website [techbabas](https://techbabas.com/)", unsafe_allow_html=True)
-    
-      # Brief Introduction
-    st.markdown("""
-    **Welcome to the Forecasting App!** 
+        social_media_icons = SocialMediaIcons(social_media_links)  # Create an instance
+        st.markdown("<br><br>", unsafe_allow_html=True) # two blank lines
+        social_media_icons.render(sidebar=True, justify_content="start")  # Call the method on the instance
 
-    This app allows you to upload historical data from an Excel file and generate forecasts for future periods. It uses a simple linear regression model to predict the trends in your data.
+        st.write("Visit my website [techbabas](https://techbabas.com/)", unsafe_allow_html=True)
+
+    # Brief Introduction
+    st.markdown("""
+    **Welcome to the Forecasting App!**
+
+    This app allows you to upload historical data or paste it directly and generate forecasts for future periods. It uses a simple linear regression model to predict the trends in your data.
 
     **Get Started:**
 
-    1.  Upload your Excel file.
+    1.  Upload your Excel file or paste your data.
     2.  Enter the number of periods to forecast.
     3.  Select your preferred chart type.
     4.  View the forecasted data and interactive chart!
     """)
 
-    # File upload
-    uploaded_file = st.file_uploader("Upload an Excel file", type=['xlsx', 'xls'])
+    # Data Input Options
+    data_source = st.radio("Select Data Input Method:", ("Upload Excel File", "Paste Data"))
 
-    if uploaded_file is not None:
-        try:
-            df = pd.read_excel(uploaded_file)
+    if data_source == "Upload Excel File":
+        st.markdown("""
+        **Data Format:**
 
-            # Number of periods to forecast
-            n_periods = st.number_input("Enter the number of periods to forecast:", min_value=1, value=5)
+        *   The first row should contain the column headers, including a 'Date' column.
+        *   The 'Date' column should be first column and in a recognizable date format (e.g., YYYY-MM-DD, MM/DD/YYYY).
+        *   Subsequent columns should contain numerical data.
+        """)
 
-            # Chart type selection
-            chart_type = st.selectbox("Select chart type:", ['line', 'bar'], index=1) # bar is default (index=1)
+    df = None  # Initialize df
+
+    if data_source == "Upload Excel File":
+        uploaded_file = st.file_uploader("Upload an Excel file", type=['xlsx', 'xls'])
+        if uploaded_file is not None:
+            try:
+                df = pd.read_excel(uploaded_file)
+            except Exception as e:
+                st.error(f"Error reading Excel file: {e}")
+
+    elif data_source == "Paste Data":
+        st.markdown("""
+        **Data Format:**
+
+        *   The first row should contain the column headers, including a 'Date' column.
+        *   The 'Date' column should be in a recognizable date format (e.g., YYYY-MM-DD, MM/DD/YYYY).
+        *   Subsequent columns should contain numerical data.
+        *   Data should be separated by commas or tabs.
+
+        **Example:**
+        ```
+        Date,Column1,Column2
+        2023-01-01,10,20
+        2023-01-02,15,25
+        2023-01-03,12,22
+        ```
+        """)
+        pasted_data = st.text_area("Paste your data here:")
+        if pasted_data:
+            try:
+                df = pd.read_csv(io.StringIO(pasted_data), sep=None, engine='python')  # Auto-detect separator
+            except Exception as e:
+                st.error(f"Error reading pasted data: {e}.  Please ensure the data is correctly formatted.")
 
 
-            # Data preprocessing
-            processed_df = preprocess_data(df)
+    if df is not None:
+        # Number of periods to forecast
+        n_periods = st.number_input("Enter the number of periods to forecast:", min_value=1, value=5)
 
-            if processed_df is not None:
-                # Forecasting
-                forecast_df = forecast(processed_df.copy(), n_periods) #Pass a copy to avoid modifying original df
-                forecast_df = forecast_df.round(0).astype(int) # round off to zero decimal place
+        # Chart type selection
+        chart_type = st.selectbox("Select chart type:", ['line', 'bar'], index=1) # bar is default (index=1)
 
-                if forecast_df is not None:
-                    # Plotting
-                    plot_forecast(processed_df, forecast_df, chart_type)
 
-                    # Display Forecasted Data
-                    st.subheader("Forecasted Data")
-                    st.dataframe(forecast_df)
-        except Exception as e:
-            st.error(f"An error occurred: {e}")
+        # Data preprocessing
+        processed_df = preprocess_data(df)
+
+        if processed_df is not None:
+            # Forecasting
+            forecast_df = forecast(processed_df.copy(), n_periods) #Pass a copy to avoid modifying original df
+            forecast_df = forecast_df.round(0).astype(int) # round off to zero decimal place
+
+            if forecast_df is not None:
+                # Plotting
+                plot_forecast(processed_df, forecast_df, chart_type)
+
+                # Display Forecasted Data
+                st.subheader("Forecasted Data")
+                st.dataframe(forecast_df)
+
 
 
 if __name__ == "__main__":
